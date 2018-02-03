@@ -1,5 +1,5 @@
 # CMakeList for MicSense
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.5)
 project(MicSense)
 
 # CMake path
@@ -14,5 +14,6 @@ include_directories(${FFTW3_INCLUDE_DIR})
 
 # Executable
 add_executable(micsense src/micsense.cpp)
+target_link_libraries(micsense m)
 target_link_libraries(micsense ${PORTAUDIO_LIBRARIES})
 target_link_libraries(micsense ${FFTW3_LIBRARIES})

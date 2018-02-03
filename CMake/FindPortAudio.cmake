@@ -1,4 +1,5 @@
-find_path(PORTAUDIO_INCLUDE_DIRS NAMES portaudio.h PATHS /usr/include)
+find_path(PORTAUDIO_INCLUDE_DIRS NAMES portaudio.h PATHS /usr/local/include)
+find_path(PORTAUDIO_LIBRARY_DIRS NAMES portaudio PATHS /usr/local/lib)
 find_library(PORTAUDIO_LIBRARY NAMES portaudio)
 find_library(PORTAUDIOCPP_LIBRARY NAMES portaudiocpp)
 
