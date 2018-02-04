@@ -46,7 +46,7 @@ static int io_callback( const void *inputBuffer, void *outputBuffer,
     
     config->numCallbacks += 1;
 
-    cout << ("%.2f\n", timeInfo->currentTime);
+    cout << timeInfo->currentTime << endl;
     /*
     if (data->sampsToGo < framesPerBuffer) {
         framesToCalc = data->sampsToGo;
@@ -77,7 +77,7 @@ int main(void) {
     err = Pa_Initialize();
     if(err != paNoError) {
         Pa_Terminate();
-        cout << "PortAudio Init failed\nHit any key to quit\n";
+        cout << "PortAudio Init failed\nHit any key to quit" << endl;
         getchar();
         return -1;   
     }
@@ -86,11 +86,11 @@ int main(void) {
     cout << "Init Input...\n";
     inputParam.device = INPUT_DEVICE;
     if (inputParam.device == paNoDevice) {
-        cout << "ERROR: Input device not found. Exiting..\n";
+        cout << "ERROR: Input device not found. Exiting.." << endl;
         Pa_Terminate();
     } 
     inputDeviceInfo = Pa_GetDeviceInfo(inputParam.device);
-    cout << ("Input Sampling Rate: %.2f\n", inputDeviceInfo->defaultSampleRate);
+    cout << "Input Sampling Rate: " << inputDeviceInfo->defaultSampleRate << endl;
     fflush(stdout);
     inputParam.channelCount = inputDeviceInfo->maxInputChannels;
     inputParam.sampleFormat = INPUT_FORMAT | paNonInterleaved;
@@ -114,7 +114,7 @@ int main(void) {
     
     /* Start stream failed */
     if (err != paNoError) {
-        cout << "ERROR: paNoError at Pa_StartStream()\n";
+        cout << "ERROR: paNoError at Pa_StartStream()" << endl;
         fflush(stdout);
         if (stream) {
             Pa_AbortStream(stream);
@@ -123,7 +123,7 @@ int main(void) {
         Pa_Terminate();
         fprintf(stderr, "Error number: %d\n", err);
         fprintf(stderr, "Error msg: %s\n", Pa_GetErrorText(err));
-        cout << "Hit any key to quit.\n";
+        cout << "Hit any key to quit." << endl;
         fflush(stdout);
         getchar();
         return -1;
@@ -133,8 +133,8 @@ int main(void) {
     c = getchar();
     
     /* User exit */
-    cout << "exiting";
-    cout << ("number of successful callbacks = %d\n", config->numCallbacks);
+    cout << "exiting" << endl;
+    cout << "number of successful callbacks = " << config->numCallbacks << endl;
     err = Pa_CloseStream(stream);
     Pa_Terminate();
     
