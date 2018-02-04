@@ -1,4 +1,4 @@
-Simple cross-platform tool to pick up audio or acoustic signals
+Fuse voice or acoustic inputs with background music
 
 # Dependencies
 * FFTW3 >= v3.3.7
