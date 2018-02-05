@@ -4,9 +4,10 @@
 
 #include <iostream>
 #include <stdio.h>
-#include <stdbool.h>
+#include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <sndfile.h>
 #include <portaudio.h>
 
 #define SAMPLE_RATE 44100
@@ -27,6 +28,8 @@ typedef struct ioData {
     int numOutputChannels;
     int framesPerCallback;
     int numCallbacks;
+    SNDFILE *wavFile;
+    SF_INFO sfinfo;
 } ioData;
 
 static int io_callback( const void *inputBuffer, void *outputBuffer,
@@ -37,31 +40,19 @@ static int io_callback( const void *inputBuffer, void *outputBuffer,
     ioData *config = (ioData*)userData;
     float *in  = (float*)inputBuffer;
     float *out = (float*)outputBuffer;
-    int framesToCalc = framesPerBuffer;
-    unsigned long i = 0;
-    short finished = 0;
+    //sf_count_t readCounter; // sf_count_t can be replaced with an int 
 
-    float inputFFTBuffer[framesPerBuffer - 1][2];
-    float *p_FFTBuffer = inputFFTBuffer[0]; 
-    
     config->numCallbacks += 1;
-
     cout << timeInfo->currentTime << endl;
-    /*
-    if (data->sampsToGo < framesPerBuffer) {
-        framesToCalc = data->sampsToGo;
-        finished = paComplete;
+
+    /*memset(out, 0, sizeof(float) * framesPerBuffer * config->numOutputChannels);
+    readCounter = sf_read_float(config->wavFile, out, framesPerBuffer * config->numOutputChannels);
+
+    if (readCounter < framesPerBuffer) {
+        return paComplete;
     }
-    else {
-        finished = paContinue;
-    }
-
-
-    while (i < framesToCalc) {
-        *out++ = *in++ * data->
-    }*/
-
-    return finished;
+    */
+    return paContinue;
 }
 
 int main(void) {
@@ -82,13 +73,22 @@ int main(void) {
         return -1;   
     }
 
+    /* libsndfile setup */
+    if(!(config->wavFile = sf_open("input.wav", SFM_READ, &config->sfinfo))) {
+        cout << "Could not open input.wav" << endl;
+        sf_perror(NULL);
+        return 1;
+    }
+
     /* Configure input param */
-    cout << "Init Input...\n";
+    cout << "Init Input..." << endl;
     inputParam.device = INPUT_DEVICE;
+
     if (inputParam.device == paNoDevice) {
         cout << "ERROR: Input device not found. Exiting.." << endl;
         Pa_Terminate();
     } 
+
     inputDeviceInfo = Pa_GetDeviceInfo(inputParam.device);
     cout << "Input Sampling Rate: " << inputDeviceInfo->defaultSampleRate << endl;
     fflush(stdout);
@@ -97,15 +97,31 @@ int main(void) {
     inputParam.suggestedLatency = Pa_GetDeviceInfo(inputParam.device)->defaultLowInputLatency;
     inputParam.hostApiSpecificStreamInfo = NULL;
 
+    /* Configure output param */
+    cout << "Init Output..." << endl;
+    outputParam.device = OUTPUT_DEVICE;
+    
+    if (outputParam.device == paNoDevice) {
+        cout << "ERROR: Output device not found. Exiting.." << endl;
+        Pa_Terminate();
+    }
+    
+    outputDeviceInfo = Pa_GetDeviceInfo(outputParam.device);
+    cout << "Output Sampling Rate: " << outputDeviceInfo->defaultSampleRate << endl;
+    fflush(stdout);
+    outputParam.channelCount = outputDeviceInfo->maxOutputChannels;
+    outputParam.sampleFormat = OUTPUT_FORMAT | paNonInterleaved;
+    outputParam.suggestedLatency = Pa_GetDeviceInfo(outputParam.device)->defaultLowOutputLatency;
+    outputParam.hostApiSpecificStreamInfo = NULL;
 
     /* Define config */
     config->framesPerCallback = FRAMES_PER_CALLBACK;
     config->numInputChannels = inputParam.channelCount;
-    // numOutputChannel here later
+    config->numOutputChannels = outputParam.channelCount;
     config->numCallbacks = 0;
 
     /* Open stream and start */
-    err = Pa_OpenStream(&stream, &inputParam, NULL, 
+    err = Pa_OpenStream(&stream, &inputParam, &outputParam, 
 			SAMPLE_RATE, 
 			config->framesPerCallback, paClipOff, 
                         io_callback,
@@ -121,6 +137,7 @@ int main(void) {
             Pa_CloseStream(stream);
         }
         Pa_Terminate();
+        sf_close(config->wavFile);
         fprintf(stderr, "Error number: %d\n", err);
         fprintf(stderr, "Error msg: %s\n", Pa_GetErrorText(err));
         cout << "Hit any key to quit." << endl;
@@ -137,7 +154,8 @@ int main(void) {
     cout << "number of successful callbacks = " << config->numCallbacks << endl;
     err = Pa_CloseStream(stream);
     Pa_Terminate();
-    
+    sf_close(config->wavFile);    
+
     return 0;    
 }
 
