@@ -1,5 +1,7 @@
 /*
- * 
+ * 2 input and output channels
+ * i/o both interleaved
+ * 128 frames per callback
  */
 
 #include <iostream>
@@ -38,13 +40,43 @@ static int io_callback( const void *inputBuffer, void *outputBuffer,
 			PaStreamCallbackFlags statusFlags,
 			void *userData ) {
     ioData *config = (ioData*)userData;
-    float *in  = (float*)inputBuffer;
-    float *out = (float*)outputBuffer;
+    INPUT_SAMPLE *in;
+    OUTPUT_SAMPLE *out;
+    short inChannel = 0, outChannel = 0;
+    short inputDone = 0, outputDone = 0;
+    short finished = 0;
+    unsigned int sample;
     //sf_count_t readCounter; // sf_count_t can be replaced with an int 
-
+    
     config->numCallbacks += 1;
     cout << timeInfo->currentTime << endl;
 
+    if (inputBuffer == NULL) {
+        return finished;
+    }
+
+    while (!(inputDone && outputDone)) {
+        in = ((INPUT_SAMPLE**)inputBuffer)[inChannel];
+        out = ((OUTPUT_SAMPLE**)outputBuffer)[outChannel];
+        
+        for (sample = 0; sample < framesPerBuffer; ++sample) {
+            *out = (*in);
+            in++;
+            out++;
+        } 
+        if (inChannel< (config->numInputChannels - 1)) {
+            inChannel++;
+        } else {
+             inputDone = 1;
+        }
+
+        if (outChannel< (config->numOutputChannels - 1)) {
+            outChannel++;
+        } else {
+             outputDone = 1;
+        }
+
+    }
     /*memset(out, 0, sizeof(float) * framesPerBuffer * config->numOutputChannels);
     readCounter = sf_read_float(config->wavFile, out, framesPerBuffer * config->numOutputChannels);
 
@@ -52,7 +84,7 @@ static int io_callback( const void *inputBuffer, void *outputBuffer,
         return paComplete;
     }
     */
-    return paContinue;
+    return finished; 
 }
 
 int main(void) {
@@ -64,7 +96,7 @@ int main(void) {
     ioData *config = &CONFIG;
     short c;
 
-    cout << "Init\n";
+    cout << "Init" << endl;
     err = Pa_Initialize();
     if(err != paNoError) {
         Pa_Terminate();
@@ -73,12 +105,25 @@ int main(void) {
         return -1;   
     }
 
+    cout << "Input Format = " << INPUT_FORMAT << endl;
+    cout << "Input Device = " << INPUT_DEVICE << endl;
+    cout << "Output Format = " << OUTPUT_FORMAT << endl;
+    cout << "Output Device = " << OUTPUT_DEVICE << endl;
+
     /* libsndfile setup */
     if(!(config->wavFile = sf_open("input.wav", SFM_READ, &config->sfinfo))) {
         cout << "Could not open input.wav" << endl;
         sf_perror(NULL);
         return 1;
     }
+
+    /* Define config */
+    //config->isInputInterleaved = 0;
+    //config->isOutputInterleaved = 0;
+    config->framesPerCallback = FRAMES_PER_CALLBACK;
+    config->numInputChannels = 2; //inputParam.channelCount;
+    config->numOutputChannels = 2; //outputParam.channelCount;
+    config->numCallbacks = 0;
 
     /* Configure input param */
     cout << "Init Input..." << endl;
@@ -92,7 +137,8 @@ int main(void) {
     inputDeviceInfo = Pa_GetDeviceInfo(inputParam.device);
     cout << "Input Sampling Rate: " << inputDeviceInfo->defaultSampleRate << endl;
     fflush(stdout);
-    inputParam.channelCount = inputDeviceInfo->maxInputChannels;
+    //inputParam.channelCount = inputDeviceInfo->maxInputChannels;
+    inputParam.channelCount = config->numInputChannels;
     inputParam.sampleFormat = INPUT_FORMAT | paNonInterleaved;
     inputParam.suggestedLatency = Pa_GetDeviceInfo(inputParam.device)->defaultLowInputLatency;
     inputParam.hostApiSpecificStreamInfo = NULL;
@@ -109,16 +155,11 @@ int main(void) {
     outputDeviceInfo = Pa_GetDeviceInfo(outputParam.device);
     cout << "Output Sampling Rate: " << outputDeviceInfo->defaultSampleRate << endl;
     fflush(stdout);
-    outputParam.channelCount = outputDeviceInfo->maxOutputChannels;
+    //outputParam.channelCount = outputDeviceInfo->maxOutputChannels;
+    outputParam.channelCount = config->numOutputChannels;
     outputParam.sampleFormat = OUTPUT_FORMAT | paNonInterleaved;
     outputParam.suggestedLatency = Pa_GetDeviceInfo(outputParam.device)->defaultLowOutputLatency;
     outputParam.hostApiSpecificStreamInfo = NULL;
-
-    /* Define config */
-    config->framesPerCallback = FRAMES_PER_CALLBACK;
-    config->numInputChannels = inputParam.channelCount;
-    config->numOutputChannels = outputParam.channelCount;
-    config->numCallbacks = 0;
 
     /* Open stream and start */
     err = Pa_OpenStream(&stream, &inputParam, &outputParam, 
