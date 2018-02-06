@@ -11,5 +11,4 @@ include_directories(${PORTAUDIO_INCLUDE_DIRS})
 
 find_package(FFTW3 REQUIRED COMPONENTS fftw3f)
 include_directories(${FFTW3_INCLUDE_DIR})
-
-add_library(bgm_player bgm_player.cpp)
+#add_library(bgm_player bgm_player.cpp)

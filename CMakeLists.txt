@@ -28,9 +28,14 @@ add_subdirectory(src)
 set(SOURCE src/voice_fusion.cpp)
 
 # Executable
-add_executable(voicefusion ${SOURCE})
-target_link_libraries(voicefusion ${PORTAUDIO_LIBRARIES})
-target_link_libraries(voicefusion ${FFTW3_LIBRARIES})
-target_link_libraries(voicefusion ${SNDFILE_LIBRARIES})
-target_link_libraries(voicefusion m) # math.h
-target_link_libraries(voicefusion bgm_player)
+add_executable(voice_fusion ${SOURCE})
+target_link_libraries(voice_fusion ${PORTAUDIO_LIBRARIES})
+target_link_libraries(voice_fusion ${FFTW3_LIBRARIES})
+target_link_libraries(voice_fusion ${SNDFILE_LIBRARIES})
+target_link_libraries(voice_fusion m) # math.h
+
+add_executable(bgm_player src/bgm_player.cpp)
+target_link_libraries(bgm_player ${PORTAUDIO_LIBRARIES})
+target_link_libraries(bgm_player ${FFTW3_LIBRARIES})
+target_link_libraries(bgm_player ${SNDFILE_LIBRARIES})
+target_link_libraries(bgm_player m)

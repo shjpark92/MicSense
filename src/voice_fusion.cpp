@@ -4,6 +4,7 @@
  * 128 frames per callback
  */
 
+#include <iomanip>
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
@@ -13,8 +14,8 @@
 #include <portaudio.h>
 
 //#define SAMPLE_RATE 44100
-//#define SAMPLE_RATE 33000 
-#define SAMPLE_RATE 22000
+#define SAMPLE_RATE 33000 
+//#define SAMPLE_RATE 22000
 #define FRAMES_PER_CALLBACK 4096 
 #define BUFFER_LEN 1024 
 
@@ -40,6 +41,30 @@ typedef struct ioData {
 
 } ioData;
 
+void plot_psd(float signalAvg[], int numChannels) {
+    int barLen;
+    float psdB;
+    unsigned currentChannel;
+
+    // 10log10(sigAvg)
+    for (currentChannel = 0; currentChannel < numChannels; ++currentChannel) {
+        psdB = 10 * log10(signalAvg[currentChannel]);
+        barLen = 64 + floor(psdB - 0.5);
+
+        if (barLen < 0) {
+            barLen = 0;
+        }
+        cout << "Channel" << currentChannel << ": ";
+        cout << fixed << setprecision(4) << psdB << " dB" << endl;
+
+        while (barLen > 0) {
+            putchar('#');
+            barLen--;
+        }
+        cout << endl;
+    }
+} 
+
 static int io_callback( const void *inputBuffer, void *outputBuffer,
 			unsigned long framesPerBuffer,
 			const PaStreamCallbackTimeInfo* timeInfo,
@@ -51,16 +76,16 @@ static int io_callback( const void *inputBuffer, void *outputBuffer,
     short inChannel = 0, outChannel = 0;
     short inputDone = 0, outputDone = 0;
     short finished = 0;
+    float powerAccumulated[inChannel], sampleValue;
     unsigned int sample;
     
     config->numCallbacks += 1;
-    cout << timeInfo->currentTime << endl;
-
+    
     if (inputBuffer == NULL) {
         return finished;
     }
 
-    /*while (!(inputDone && outputDone)) {
+    while (!(inputDone && outputDone)) {
         in = ((INPUT_SAMPLE**)inputBuffer)[inChannel];
         out = ((OUTPUT_SAMPLE**)outputBuffer)[outChannel];
         
@@ -68,7 +93,15 @@ static int io_callback( const void *inputBuffer, void *outputBuffer,
             *out = (*in);
             in++;
             out++;
-        } 
+            
+            // PSD Calculation here - square sample value to obtain power
+            sampleValue = in[inChannel + sample * config->numInputChannels];
+            powerAccumulated[inChannel] += sampleValue * sampleValue;
+        }
+
+        // Compute average power
+        powerAccumulated[inChannel] /= framesPerBuffer;
+ 
         if (inChannel< (config->numInputChannels - 1)) {
             inChannel++;
         } else {
@@ -83,18 +116,21 @@ static int io_callback( const void *inputBuffer, void *outputBuffer,
 
     }
 
+    // Plot PSD Calculation
+    plot_psd(powerAccumulated, config->numInputChannels);
+
     return finished;
-    */
-    out = ((OUTPUT_SAMPLE**)outputBuffer)[outChannel];
+    
+    /*out = ((OUTPUT_SAMPLE**)outputBuffer)[outChannel];
     
     memset(out, 0x00, framesPerBuffer);
     long readcount = 0;
-    readcount = sf_read_float(config->wavFile, out, framesPerBuffer * 2);
+    readcount = sf_read_float(config->wavFile, out, framesPerBuffer);
     if (readcount <= 0) {
         cout << "File ended" << endl;
         return paComplete;
     } 
-    return paContinue;
+    return paContinue; */
 }
 
 int main(void) {
