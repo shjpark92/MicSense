@@ -136,7 +136,7 @@ int main(void) {
         cout << "ERROR: Output device not found. Exiting.." << endl;
         Pa_Terminate();
     }
-    
+
     outputDeviceInfo = Pa_GetDeviceInfo(outputParam.device);
     cout << "Output Sampling Rate: " << outputDeviceInfo->defaultSampleRate << endl;
     fflush(stdout);

@@ -1,7 +1,6 @@
 /*
  * 2 input and output channels
- * i/o both interleaved
- * 128 frames per callback
+ * i/o are not interleaved
  */
 
 #include <iomanip>
@@ -155,14 +154,6 @@ int main(void) {
     cout << "Input Device = " << INPUT_DEVICE << endl;
     cout << "Output Format = " << OUTPUT_FORMAT << endl;
     cout << "Output Device = " << OUTPUT_DEVICE << endl;
-
-    /* libsndfile setup */
-    if(!(config->wavFile = sf_open("../wav/a2002011001-e02-16kHz.wav", SFM_READ, &config->sfinfo))) {
-        cout << "Could not open input.wav" << endl;
-        sf_perror(NULL);
-        return 1;
-    }
-
 
     /* Define config */
     config->isInputInterleaved = 0;

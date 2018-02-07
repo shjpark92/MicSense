@@ -9,6 +9,4 @@ check_c99()
 find_package(PortAudio REQUIRED)
 include_directories(${PORTAUDIO_INCLUDE_DIRS})
 
-find_package(FFTW3 REQUIRED COMPONENTS fftw3f)
-include_directories(${FFTW3_INCLUDE_DIR})
 #add_library(bgm_player bgm_player.cpp)

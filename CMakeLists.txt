@@ -13,9 +13,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
 find_package(PortAudio REQUIRED)
 include_directories(${PORTAUDIO_INCLUDE_DIRS})
 
-find_package(FFTW3 REQUIRED COMPONENTS fftw3f)
-include_directories(${FFTW3_INCLUDE_DIR})
-
 find_package(SNDFILE REQUIRED)
 include_directories(${SNDFILE_INCLUDE_DIRS})
 
@@ -30,12 +27,10 @@ set(SOURCE src/voice_fusion.cpp)
 # Executable
 add_executable(voice_fusion ${SOURCE})
 target_link_libraries(voice_fusion ${PORTAUDIO_LIBRARIES})
-target_link_libraries(voice_fusion ${FFTW3_LIBRARIES})
 target_link_libraries(voice_fusion ${SNDFILE_LIBRARIES})
 target_link_libraries(voice_fusion m) # math.h
 
 add_executable(bgm_player src/bgm_player.cpp)
 target_link_libraries(bgm_player ${PORTAUDIO_LIBRARIES})
-target_link_libraries(bgm_player ${FFTW3_LIBRARIES})
 target_link_libraries(bgm_player ${SNDFILE_LIBRARIES})
 target_link_libraries(bgm_player m)
